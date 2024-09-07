@@ -1,5 +1,6 @@
 package server.client;
 
+import server.client.model.MessageEvent;
 import server.client.model.Player;
 import server.client.model.PlayerContainer;
 
@@ -9,14 +10,20 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Queue;
 
-public class GameClient implements Runnable{
+public class GameClient implements Runnable, MessageEvent {
 
     private final Socket client;
-
-    public GameClient(Socket client){
+    private final OutputStream outputStream;
+    public GameClient(Socket client) throws IOException {
         this.client = client;
+        this.outputStream = client.getOutputStream();
     }
+
+    //queue -> pushnij wiadomosc tutaj
+    private static final Queue<String> playerQueue = PlayerContainer.playerQueue;
 
     @Override
     public void run() {
@@ -25,12 +32,11 @@ public class GameClient implements Runnable{
         try {
             InputStream inputStream = client.getInputStream();
             OutputStream outputStream = client.getOutputStream();
+            PlayerContainer.registerThread(this);
             startListening(inputStream);
-            startSending(outputStream);
         }catch (IOException e){
             System.out.println("Rozerwalo polaczenie z graczem");
         }
-
     }
 
     public void startListening(InputStream inputStream){
@@ -44,12 +50,13 @@ public class GameClient implements Runnable{
         }).start();
     }
 
-    public void startSending(OutputStream outputStream){
-        Thread sendingThread = new Thread(()->{
-            System.out.println("Watek co bedzie odpowiedzialny za wysylanie: " + Thread.currentThread());
-        });
-        //register this thread to container
-        sendingThread.start();
+
+    @Override
+    public void send() throws IOException {
+        String message = playerQueue.peek();
+        if(message != null){
+            outputStream.write(message.getBytes());
+        }
     }
 
 
@@ -88,5 +95,6 @@ public class GameClient implements Runnable{
 
         System.out.println("Byte wyniosl -1 wiec nasluchiwanie na watku: " + Thread.currentThread() + " dobieglo konca");
     }
+
 
 }
