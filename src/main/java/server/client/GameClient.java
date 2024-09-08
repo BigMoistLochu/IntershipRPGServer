@@ -1,6 +1,6 @@
 package server.client;
 
-import server.client.model.MessageEvent;
+import server.client.model.Observer;
 import server.client.model.Player;
 import server.client.model.PlayerContainer;
 
@@ -10,52 +10,44 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Queue;
 
-public class GameClient implements Runnable, MessageEvent {
+public class GameClient implements Runnable, Observer {
 
-    private final Socket client;
+
     private final OutputStream outputStream;
-    public GameClient(Socket client) throws IOException {
-        this.client = client;
-        this.outputStream = client.getOutputStream();
-    }
+    private final InputStream inputStream;
+    private final PlayerContainer playerContainer = PlayerContainer.getInstance();
 
-    //queue -> pushnij wiadomosc tutaj
-    private static final Queue<String> playerQueue = PlayerContainer.playerQueue;
+    public GameClient(Socket client) throws IOException {
+        this.outputStream = client.getOutputStream();
+        this.inputStream = client.getInputStream();
+    }
 
     @Override
     public void run() {
-        System.out.println("start nowego watku: " + Thread.currentThread());
-
-        try {
-            InputStream inputStream = client.getInputStream();
-            OutputStream outputStream = client.getOutputStream();
-            PlayerContainer.registerThread(this);
-            startListening(inputStream);
-        }catch (IOException e){
-            System.out.println("Rozerwalo polaczenie z graczem");
-        }
+        System.out.println("Start nowego watku: " + Thread.currentThread());
+        playerContainer.addObserver(this);
+        startListening(inputStream);
     }
 
-    public void startListening(InputStream inputStream){
-        new Thread(()->{
-            System.out.println("Watek co bedzie odpowiedzialny za odbieranie: " + Thread.currentThread());
+    public void startListening(InputStream inputStream) {
+        Thread listeningThread = new Thread(() -> {
+            System.out.println("Watek odpowiedzialny za odbieranie wiadomosci: " + Thread.currentThread().getName());
             try {
-                messageListener(inputStream);
+                listenForMessages(inputStream);
             } catch (IOException e) {
-                System.out.println("Blad w nasluchiwaniu na wiadomosc od klienta");
+                System.err.println("Blad podczas odbierania wiadomosci od klienta: " + e.getMessage());
             }
-        }).start();
+        });
+        listeningThread.start();
     }
 
 
     @Override
-    public void send() throws IOException {
-        String message = playerQueue.peek();
-        if(message != null){
-            outputStream.write(message.getBytes());
+    public void send(Player player) throws IOException {
+        if(player != null){
+            outputStream.write(player.serializedPlayerPosition());
         }
     }
 
@@ -77,7 +69,7 @@ public class GameClient implements Runnable, MessageEvent {
      * @param inputStream strumień wejściowy zawierający dane protokołu
      * @throws IOException jeżeli wystąpi błąd podczas odczytu danych ze strumienia
      */
-    public void messageListener(InputStream inputStream) throws IOException {
+    public void listenForMessages(InputStream inputStream) throws IOException {
 
         int _byte;
         List<Integer> byteList = new ArrayList<>();
@@ -89,7 +81,7 @@ public class GameClient implements Runnable, MessageEvent {
             }
 
             Player player = new Player(byteList.get(0),byteList.get(1),byteList.get(2),byteList.get(3));
-            PlayerContainer.addPlayerToContainer(player);
+            playerContainer.addPlayerToContainer(player);
             byteList.clear();
         }
 

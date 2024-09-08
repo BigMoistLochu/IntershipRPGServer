@@ -2,35 +2,56 @@ package server.client.model;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class PlayerContainer {
+public class PlayerContainer implements Observable{
 
-    private static final Map<Integer,Player> playerMap = new HashMap<>();
-    public static final Queue<String> playerQueue = new PriorityQueue<>();
-    private static final List<MessageEvent> listOfThread = new ArrayList<>();
 
-    public static void addPlayerToContainer(Player player){
-        playerMap.put(player.getId(), player);
-        System.out.println("Postac zmienila pozycje: " + playerMap.get(player.getId()));
-        //tutaj trzeba dodac zeby powiadomilo wszystkie dostepne watki do wyslania wiadomosci
-        playerQueue.add("Dodalem wiadomosc");
+    private static PlayerContainer INSTANCE = null;
+    private final List<Observer> messagePublisher = new ArrayList<>();
 
-        listOfThread.forEach(messageEvent -> {
+    public final Queue<Player> playerQueue = new LinkedBlockingQueue<>();
+
+    private PlayerContainer(){}
+
+    public synchronized static PlayerContainer getInstance(){
+        if(INSTANCE==null){
+            INSTANCE = new PlayerContainer();
+        }
+
+        return INSTANCE;
+    }
+
+    public void addPlayerToContainer(Player player){
+        playerQueue.add(player);
+        System.out.println(playerQueue);
+        updateMessageQueue(playerQueue.remove());
+    }
+
+    public void updateMessageQueue(Player player){
+        if(player!=null){
+            notifyObservers(player);
+        }
+    }
+
+    @Override
+    public void addObserver(Observer observer) {
+        messagePublisher.add(observer);
+    }
+
+    @Override
+    public void removeObserver(Observer observer) {
+        messagePublisher.remove(observer);
+    }
+
+    @Override
+    public void notifyObservers(Player player) {
+        for (Observer observer : messagePublisher){
             try {
-                messageEvent.send();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                observer.send(player);
+            }catch (IOException e){
+                System.out.println("Blad podczas wysylania wiadomosci");
             }
-        });
+        }
     }
-
-    public static void registerThread(MessageEvent messageEvent){
-        listOfThread.add(messageEvent);
-    }
-
-
-
-
-
-
 }

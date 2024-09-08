@@ -47,6 +47,11 @@ public class Player {
     }
 
 
+    public byte[] serializedPlayerPosition(){
+        byte[] playerInfo = {(byte) id , (byte) x , (byte) y , (byte) direction};
+        return playerInfo;
+    }
+
     @Override
     public String toString() {
         return "Player{" +
