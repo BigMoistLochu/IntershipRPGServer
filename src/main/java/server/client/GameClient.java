@@ -1,8 +1,7 @@
 package server.client;
 
-import server.client.model.Observer;
 import server.client.model.Player;
-import server.client.model.PlayerContainer;
+import server.client.cache.PlayerContainer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +9,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 
 public class GameClient implements Runnable, Observer {
 
@@ -48,6 +46,8 @@ public class GameClient implements Runnable, Observer {
     public void send(Player player) throws IOException {
         if(player != null){
             outputStream.write(player.serializedPlayerPosition());
+            outputStream.write(255);
+            outputStream.flush();
         }
     }
 
@@ -81,7 +81,7 @@ public class GameClient implements Runnable, Observer {
             }
 
             Player player = new Player(byteList.get(0),byteList.get(1),byteList.get(2),byteList.get(3));
-            playerContainer.addPlayerToContainer(player);
+            playerContainer.update(player);
             byteList.clear();
         }
 

@@ -1,4 +1,6 @@
-package server.client.model;
+package server.client;
+
+import server.client.model.Player;
 
 import java.io.IOException;
 

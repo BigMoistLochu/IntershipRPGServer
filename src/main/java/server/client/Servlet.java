@@ -6,13 +6,14 @@ import java.net.Socket;
 
 public class Servlet implements Runnable{
 
+    public Servlet(){ System.out.println("Server nasluchuje na porcie 8080"); }
+
     @Override
     public void run() {
         try {
             ServerSocket socket = new ServerSocket(8080);
 
             while (true) {
-                System.out.println("server nasluchuje na porcie 8080");
                 Socket client = socket.accept();
 
                 GameClient gameClient = new GameClient(client);
@@ -21,7 +22,7 @@ public class Servlet implements Runnable{
 
 
         }catch (IOException e){
-            System.out.println("Cos nie tak ze streamem");
+            System.out.println("Port 8080 jest aktualnie zajety");
         }
     }
 

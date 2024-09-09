@@ -1,16 +1,16 @@
-package server.client.model;
+package server.client.cache;
+
+import server.client.Observer;
+import server.client.model.Player;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
 
-public class PlayerContainer implements Observable{
+public class PlayerContainer implements PlayerObservable {
 
 
     private static PlayerContainer INSTANCE = null;
     private final List<Observer> messagePublisher = new ArrayList<>();
-
-    public final Queue<Player> playerQueue = new LinkedBlockingQueue<>();
 
     private PlayerContainer(){}
 
@@ -18,20 +18,11 @@ public class PlayerContainer implements Observable{
         if(INSTANCE==null){
             INSTANCE = new PlayerContainer();
         }
-
         return INSTANCE;
     }
 
-    public void addPlayerToContainer(Player player){
-        playerQueue.add(player);
-        System.out.println(playerQueue);
-        updateMessageQueue(playerQueue.remove());
-    }
-
-    public void updateMessageQueue(Player player){
-        if(player!=null){
-            notifyObservers(player);
-        }
+    public synchronized void update(Player player){
+        if(player!=null) notifyObservers(player);
     }
 
     @Override
