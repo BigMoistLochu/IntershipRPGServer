@@ -10,7 +10,7 @@ https://github.com/BigMoistLochu/IntershipRPGame.git
 Najpierw sklonuj projekt na swój lokalny komputer:
 
 ```bash
-git clone https://github.com/BigMoistLochu/IntershipRPGame.git
+git clone https://github.com/BigMoistLochu/IntershipRPGServer
 ```
 
 ### 2. Zbudowanie Obrazu
