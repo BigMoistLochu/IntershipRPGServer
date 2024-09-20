@@ -3,7 +3,7 @@ package server.client.cache;
 import server.client.Observer;
 import server.client.model.Player;
 
-import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
